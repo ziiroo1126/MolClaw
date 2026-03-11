@@ -20,6 +20,9 @@ Before running inference, verify all of the following:
 
 - `/workspace/group/odesign_runs/<run_name>/odesign_input.json` exists.
 - `/workspace/group/odesign_runs/<run_name>/inference_demo.sh` exists.
+- `/workspace/odesign/scripts/inference.py` exists.
+- `/workspace/odesign/configs` exists.
+- `/workspace/odesign/src` exists.
 - `/opt/conda/envs/odesign` exists.
 
 Default paths:
@@ -53,7 +56,7 @@ Because the parser writes `exp_name=""`, ODesign will use its own default output
 - Keep all user-editable artifacts in the run directory.
 - Preserve the parser-generated script content exactly; only create the local symlinks needed for execution.
 - Do not claim success unless you inspect the output directory and confirm at least one generated artifact such as:
-  - `run.log`
+  - a Hydra-created run directory under `outputs/`
   - `traceback.pkl`
   - a `.cif` file under `predictions/`
 
@@ -61,4 +64,4 @@ Because the parser writes `exp_name=""`, ODesign will use its own default output
 
 - Report the run directory and output directory.
 - If prerequisites are missing, say exactly which paths or files are absent.
-- If the run fails, summarize the concrete error from `run.log` or stderr.
+- If the run fails, summarize the concrete error from stderr or files under the generated `outputs/` tree.
