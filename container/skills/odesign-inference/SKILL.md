@@ -1,25 +1,26 @@
 ---
 name: odesign-inference
-description: Run ODesign protein-design inference from a parsed task spec or prepared ODesign input JSON. Use when the user wants to execute ODesign, prepare `inference_demo.sh`, or generate design outputs rather than only parse the prompt.
+description: Run ODesign inference from an already prepared `odesign_input.json` and `inference_demo.sh`. Use when the task-parser skill has already materialized the run files and you need to execute ODesign to generate outputs.
 ---
 
 # ODesign Inference
 
-Use this skill to run ODesign inside MolClaw after task parsing is complete.
+Use this skill only after the task-parser skill has already created:
 
-Do not edit `/workspace/odesign` in place. Treat it as a read-only mounted repo and stage each run under `/workspace/group/odesign_runs/...`.
+- `/workspace/group/odesign_runs/<run_name>/odesign_input.json`
+- `/workspace/group/odesign_runs/<run_name>/inference_demo.sh`
+
+This skill does not regenerate either file. It only verifies prerequisites and runs the prepared script.
+
+Do not edit `/workspace/odesign` in place. Treat it as a read-only mounted repo and execute each run from `/workspace/group/odesign_runs/...`.
 
 ## Runtime Requirements
 
 Before running inference, verify all of the following:
 
-- `/workspace/odesign/inference_demo.sh` exists.
-- `/workspace/odesign/scripts/inference.py` exists.
-- `odesign-python` is available in `PATH`.
-- The required ODesign data files exist under the chosen `data_root_dir`:
-  - `components.v20240608.cif`
-  - `components.v20240608.cif.rdkit_mol.pkl`
-- The checkpoint `${infer_model_name}.pt` exists under the chosen `ckpt_root_dir`.
+- `/workspace/group/odesign_runs/<run_name>/odesign_input.json` exists.
+- `/workspace/group/odesign_runs/<run_name>/inference_demo.sh` exists.
+- `/opt/conda/envs/odesign` exists.
 
 Default paths:
 
@@ -29,32 +30,28 @@ Default paths:
 
 ## Preferred Workflow
 
-1. Save the parsed task payload to a JSON file in the run directory.
-2. Validate it with the task-parser validator when possible.
-3. Prepare a writable run workspace with:
-
-```bash
-python3 ~/.claude/skills/odesign-inference/scripts/prepare_odesign_inference.py \
-  --spec /workspace/group/odesign_runs/<run_name>/task_spec.json \
-  --run-dir /workspace/group/odesign_runs/<run_name>
-```
-
-4. This creates:
-   - `odesign_input.json`
-   - a run-local `inference_demo.sh`
-5. Run the prepared script from the run directory:
+1. Change into the prepared run directory.
+2. Link the ODesign repo subdirectories expected by the stock script.
+3. Activate the `odesign` conda environment.
+4. Run the prepared script as-is:
 
 ```bash
 cd /workspace/group/odesign_runs/<run_name>
+ln -sfn /workspace/odesign/scripts ./scripts
+ln -sfn /workspace/odesign/configs ./configs
+ln -sfn /workspace/odesign/src ./src
+source /opt/conda/etc/profile.d/conda.sh
+conda activate odesign
 bash ./inference_demo.sh
 ```
 
+Because the parser writes `exp_name=""`, ODesign will use its own default output naming under `outputs/infer_<infer_model_name>/...` unless the upstream template changes.
+
 ## Behavior Rules
 
+- Do not regenerate `odesign_input.json` or `inference_demo.sh` in this skill.
 - Keep all user-editable artifacts in the run directory.
-- Preserve the parsed `infer_model_name`, `design_modality`, and `odesign_input`.
-- Auto-enable `use_msa=true` only when at least one chain contains an `msa` block.
-- Prefer the first non-empty sample `name` as `exp_name`; otherwise fall back to `infer_<infer_model_name>`.
+- Preserve the parser-generated script content exactly; only create the local symlinks needed for execution.
 - Do not claim success unless you inspect the output directory and confirm at least one generated artifact such as:
   - `run.log`
   - `traceback.pkl`

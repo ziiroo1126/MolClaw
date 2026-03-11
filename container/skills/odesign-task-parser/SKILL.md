@@ -50,13 +50,7 @@ After building the internal task spec:
 
 1. Choose a writable run directory under `/workspace/group/odesign_runs/<run_name>/`.
 2. Save the internal task spec to `task_spec.json` in that directory.
-3. Validate the task spec with:
-
-```bash
-python3 ~/.claude/skills/odesign-task-parser/scripts/validate_odesign_task.py /workspace/group/odesign_runs/<run_name>/task_spec.json
-```
-
-4. Materialize the final files with:
+3. Materialize the final files with:
 
 ```bash
 python3 ~/.claude/skills/odesign-task-parser/scripts/write_odesign_files.py \
