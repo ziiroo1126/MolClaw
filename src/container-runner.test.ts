@@ -9,11 +9,13 @@ const OUTPUT_END_MARKER = '---BIOCLAW_OUTPUT_END---';
 // Mock config
 vi.mock('./config.js', () => ({
   CONTAINER_IMAGE: 'bioclaw-agent:latest',
+  CONTAINER_GPU_REQUEST: '',
   CONTAINER_MAX_OUTPUT_SIZE: 10485760,
   CONTAINER_TIMEOUT: 1800000, // 30min
   DATA_DIR: '/tmp/bioclaw-test-data',
   GROUPS_DIR: '/tmp/bioclaw-test-groups',
   IDLE_TIMEOUT: 1800000, // 30min
+  ODESIGN_REPO_DIR: '/tmp/ODesign',
 }));
 
 // Mock logger

@@ -22,6 +22,8 @@ export const MAIN_GROUP_FOLDER = 'main';
 
 export const CONTAINER_IMAGE =
   process.env.CONTAINER_IMAGE || 'bioclaw-agent:latest';
+export const CONTAINER_GPU_REQUEST =
+  process.env.CONTAINER_GPU_REQUEST ?? 'all';
 export const CONTAINER_TIMEOUT = parseInt(
   process.env.CONTAINER_TIMEOUT || '1800000',
   10,
@@ -39,6 +41,8 @@ export const MAX_CONCURRENT_CONTAINERS = Math.max(
   1,
   parseInt(process.env.MAX_CONCURRENT_CONTAINERS || '5', 10) || 5,
 );
+export const ODESIGN_REPO_DIR =
+  process.env.ODESIGN_REPO_DIR || path.resolve(PROJECT_ROOT, '..', 'ODesign');
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

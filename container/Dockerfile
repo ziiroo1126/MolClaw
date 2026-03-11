@@ -2,6 +2,13 @@
 # Runs Claude Agent SDK in isolated Linux VM with biology tools and browser automation
 
 FROM node:22-slim
+SHELL ["/bin/bash", "-lc"]
+
+ENV CONDA_DIR=/opt/conda
+ENV PATH=${CONDA_DIR}/bin:${PATH}
+ENV ODESIGN_REPO_DIR=/workspace/odesign
+ENV CUTLASS_PATH=/opt/odesign/cutlass
+ENV LAYERNORM_TYPE=fast_layernorm
 
 # Install system dependencies for Chromium + bio tools
 RUN apt-get update && apt-get install -y \
@@ -29,6 +36,15 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     unzip \
+    ca-certificates \
+    build-essential \
+    cmake \
+    g++ \
+    libjpeg-dev \
+    libpng-dev \
+    libgl1 \
+    libglib2.0-0 \
+    fontconfig \
     # --- Biology tools (apt) ---
     ncbi-blast+ \
     samtools \
@@ -67,6 +83,25 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     pysam \
     requests \
     multiqc
+
+# Install Miniconda and create a dedicated ODesign environment (Python 3.10)
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/install-conda.sh \
+    && bash /tmp/install-conda.sh -b -p "${CONDA_DIR}" \
+    && rm -f /tmp/install-conda.sh \
+    && conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main \
+    && conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r \
+    && conda create -y -n odesign python=3.10 \
+    && conda clean -afy
+
+COPY odesign-requirements.txt /tmp/odesign-requirements.txt
+RUN conda run --no-capture-output -n odesign pip install --no-cache-dir \
+    -r /tmp/odesign-requirements.txt \
+    -f https://data.pyg.org/whl/torch-2.3.1+cu121.html \
+    && rm -f /tmp/odesign-requirements.txt
+
+RUN git clone -b v3.5.1 https://github.com/NVIDIA/cutlass.git "${CUTLASS_PATH}"
+RUN printf '#!/bin/bash\nset -e\nsource /opt/conda/etc/profile.d/conda.sh\nexec conda run --no-capture-output -n odesign python "$@"\n' > /usr/local/bin/odesign-python \
+    && chmod +x /usr/local/bin/odesign-python
 
 # Install PyMOL (headless) via apt
 RUN apt-get update && apt-get install -y \

@@ -9,14 +9,17 @@ import path from 'path';
 
 import {
   CONTAINER_IMAGE,
+  CONTAINER_GPU_REQUEST,
   CONTAINER_MAX_OUTPUT_SIZE,
   CONTAINER_TIMEOUT,
   DATA_DIR,
   GROUPS_DIR,
   IDLE_TIMEOUT,
+  ODESIGN_REPO_DIR,
 } from './config.js';
 import { logger } from './logger.js';
 import { validateAdditionalMounts } from './mount-security.js';
+import { syncSkillsDirectory } from './skill-sync.js';
 import { RegisteredGroup } from './types.js';
 
 // Sentinel markers for robust output parsing (must match agent-runner)
@@ -98,6 +101,14 @@ function buildVolumeMounts(
     }
   }
 
+  if (fs.existsSync(ODESIGN_REPO_DIR)) {
+    mounts.push({
+      hostPath: ODESIGN_REPO_DIR,
+      containerPath: '/workspace/odesign',
+      readonly: true,
+    });
+  }
+
   // Per-group Claude sessions directory (isolated from other groups)
   // Each group gets their own .claude/ to prevent cross-group session access
   const groupSessionsDir = path.join(
@@ -127,19 +138,7 @@ function buildVolumeMounts(
   // Sync skills from container/skills/ into each group's .claude/skills/
   const skillsSrc = path.join(process.cwd(), 'container', 'skills');
   const skillsDst = path.join(groupSessionsDir, 'skills');
-  if (fs.existsSync(skillsSrc)) {
-    for (const skillDir of fs.readdirSync(skillsSrc)) {
-      const srcDir = path.join(skillsSrc, skillDir);
-      if (!fs.statSync(srcDir).isDirectory()) continue;
-      const dstDir = path.join(skillsDst, skillDir);
-      fs.mkdirSync(dstDir, { recursive: true });
-      for (const file of fs.readdirSync(srcDir)) {
-        const srcFile = path.join(srcDir, file);
-        const dstFile = path.join(dstDir, file);
-        fs.copyFileSync(srcFile, dstFile);
-      }
-    }
-  }
+  syncSkillsDirectory(skillsSrc, skillsDst);
   mounts.push({
     hostPath: groupSessionsDir,
     containerPath: '/home/node/.claude',
@@ -215,6 +214,10 @@ function readSecrets(): Record<string, string> {
 
 function buildContainerArgs(mounts: VolumeMount[], containerName: string): string[] {
   const args: string[] = ['run', '-i', '--rm', '--name', containerName];
+
+  if (CONTAINER_GPU_REQUEST.trim()) {
+    args.push('--gpus', CONTAINER_GPU_REQUEST);
+  }
 
   // Docker: -v with :ro suffix for readonly
   for (const mount of mounts) {

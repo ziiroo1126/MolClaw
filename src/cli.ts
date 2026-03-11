@@ -10,10 +10,13 @@ import { spawn } from 'child_process';
 import {
   ASSISTANT_NAME,
   CONTAINER_IMAGE,
+  CONTAINER_GPU_REQUEST,
   GROUPS_DIR,
   DATA_DIR,
+  ODESIGN_REPO_DIR,
 } from './config.js';
 import { logger } from './logger.js';
+import { syncSkillsDirectory } from './skill-sync.js';
 
 const GROUP_FOLDER = 'cli-test';
 
@@ -40,20 +43,10 @@ function ensureDirs() {
     }, null, 2) + '\n');
   }
 
-  // Copy bio-tools skill
+  // Sync bundled skills into the CLI session.
   const skillsSrc = path.join(process.cwd(), 'container', 'skills');
   const skillsDst = path.join(DATA_DIR, 'sessions', GROUP_FOLDER, '.claude', 'skills');
-  if (fs.existsSync(skillsSrc)) {
-    for (const skillDir of fs.readdirSync(skillsSrc)) {
-      const srcDir = path.join(skillsSrc, skillDir);
-      if (!fs.statSync(srcDir).isDirectory()) continue;
-      const dstDir = path.join(skillsDst, skillDir);
-      fs.mkdirSync(dstDir, { recursive: true });
-      for (const file of fs.readdirSync(srcDir)) {
-        fs.copyFileSync(path.join(srcDir, file), path.join(dstDir, file));
-      }
-    }
-  }
+  syncSkillsDirectory(skillsSrc, skillsDst);
 }
 
 function readSecrets(): Record<string, string> {
@@ -95,13 +88,25 @@ async function runAgent(prompt: string): Promise<string> {
 
   const args = [
     'run', '-i', '--rm',
+  ];
+
+  if (CONTAINER_GPU_REQUEST.trim()) {
+    args.push('--gpus', CONTAINER_GPU_REQUEST);
+  }
+
+  args.push(
     '-v', `${groupDir}:/workspace/group`,
     '-v', `${globalDir}:/workspace/global:ro`,
     '-v', `${sessionsDir}:/home/node/.claude`,
     '-v', `${ipcDir}:/workspace/ipc`,
     '-v', `${agentRunnerSrc}:/app/src:ro`,
-    CONTAINER_IMAGE,
-  ];
+  );
+
+  if (fs.existsSync(ODESIGN_REPO_DIR)) {
+    args.push('-v', `${ODESIGN_REPO_DIR}:/workspace/odesign:ro`);
+  }
+
+  args.push(CONTAINER_IMAGE);
 
   return new Promise((resolve) => {
     const container = spawn('docker', args, { stdio: ['pipe', 'pipe', 'pipe'] });
