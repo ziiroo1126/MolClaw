@@ -23,7 +23,7 @@ export const MAIN_GROUP_FOLDER = 'main';
 export const CONTAINER_IMAGE =
   process.env.CONTAINER_IMAGE || 'bioclaw-agent:latest';
 export const CONTAINER_GPU_REQUEST =
-  process.env.CONTAINER_GPU_REQUEST ?? 'all';
+  process.env.CONTAINER_GPU_REQUEST ?? 'auto';
 export const CONTAINER_TIMEOUT = parseInt(
   process.env.CONTAINER_TIMEOUT || '1800000',
   10,

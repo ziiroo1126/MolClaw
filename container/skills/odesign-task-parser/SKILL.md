@@ -79,8 +79,9 @@ Fill the following `inference_demo.sh` parameters exactly like this:
 - `exp_name=""`
 - `use_msa=true` only when at least one chain has a non-empty `msa` block; otherwise `false`.
 - Replace `export CUDA_VISIBLE_DEVICES=0` with an auto-detect block that picks the currently lightest GPU via `nvidia-smi`, then falls back to `0` when detection is unavailable.
+- Add a shell safety preamble so the generated script exits non-zero when ODesign inference fails.
 
-Do not change any other `inference_demo.sh` parameters or command lines in this skill. Copy the template content as-is and replace only the fields listed above.
+Do not change any other `inference_demo.sh` parameters or command lines in this skill. Copy the template content as-is except for the listed field replacements and the shell safety preamble.
 
 ## Field Mapping
 

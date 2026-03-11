@@ -10,11 +10,11 @@ import { spawn } from 'child_process';
 import {
   ASSISTANT_NAME,
   CONTAINER_IMAGE,
-  CONTAINER_GPU_REQUEST,
   GROUPS_DIR,
   DATA_DIR,
   ODESIGN_REPO_DIR,
 } from './config.js';
+import { resolveContainerGpuRequest } from './container-gpu.js';
 import { logger } from './logger.js';
 import { syncSkillsDirectory } from './skill-sync.js';
 
@@ -89,9 +89,10 @@ async function runAgent(prompt: string): Promise<string> {
   const args = [
     'run', '-i', '--rm',
   ];
+  const gpuRequest = resolveContainerGpuRequest();
 
-  if (CONTAINER_GPU_REQUEST.trim()) {
-    args.push('--gpus', CONTAINER_GPU_REQUEST);
+  if (gpuRequest) {
+    args.push('--gpus', gpuRequest);
   }
 
   args.push(

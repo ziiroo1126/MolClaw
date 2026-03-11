@@ -78,6 +78,16 @@ else
 fi"""
 
 
+def ensure_shell_strict_mode(content: str) -> str:
+    strict_block = "# Added by MolClaw to propagate inference failures.\nset -euo pipefail\n"
+    if "set -euo pipefail" in content:
+        return content
+    if content.startswith("#!"):
+        shebang, remainder = content.split("\n", 1)
+        return f"{shebang}\n{strict_block}\n{remainder}"
+    return f"{strict_block}\n{content}"
+
+
 def render_inference_demo(
     template: str,
     infer_model_name: str,
@@ -85,7 +95,7 @@ def render_inference_demo(
     input_json_path: Path,
     use_msa: bool,
 ) -> str:
-    content = template
+    content = ensure_shell_strict_mode(template)
     content = replace_once(content, r'^infer_model_name=.*$', f'infer_model_name="{infer_model_name}"')
     content = replace_once(content, r'^design_modality=.*$', f'design_modality="{design_modality}"')
     content = replace_once(

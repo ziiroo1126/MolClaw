@@ -9,7 +9,6 @@ import path from 'path';
 
 import {
   CONTAINER_IMAGE,
-  CONTAINER_GPU_REQUEST,
   CONTAINER_MAX_OUTPUT_SIZE,
   CONTAINER_TIMEOUT,
   DATA_DIR,
@@ -17,6 +16,7 @@ import {
   IDLE_TIMEOUT,
   ODESIGN_REPO_DIR,
 } from './config.js';
+import { resolveContainerGpuRequest } from './container-gpu.js';
 import { logger } from './logger.js';
 import { validateAdditionalMounts } from './mount-security.js';
 import { syncSkillsDirectory } from './skill-sync.js';
@@ -214,9 +214,10 @@ function readSecrets(): Record<string, string> {
 
 function buildContainerArgs(mounts: VolumeMount[], containerName: string): string[] {
   const args: string[] = ['run', '-i', '--rm', '--name', containerName];
+  const gpuRequest = resolveContainerGpuRequest();
 
-  if (CONTAINER_GPU_REQUEST.trim()) {
-    args.push('--gpus', CONTAINER_GPU_REQUEST);
+  if (gpuRequest) {
+    args.push('--gpus', gpuRequest);
   }
 
   // Docker: -v with :ro suffix for readonly
