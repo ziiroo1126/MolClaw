@@ -41,8 +41,9 @@ export const MAX_CONCURRENT_CONTAINERS = Math.max(
   1,
   parseInt(process.env.MAX_CONCURRENT_CONTAINERS || '5', 10) || 5,
 );
-export const ODESIGN_REPO_DIR =
-  process.env.ODESIGN_REPO_DIR || path.resolve(PROJECT_ROOT, '..', 'ODesign');
+// Optional host override mount for ODesign source/data/ckpt.
+// Default is empty because the image now bundles ODesign at /workspace/odesign.
+export const ODESIGN_REPO_DIR = process.env.ODESIGN_REPO_DIR || '';
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

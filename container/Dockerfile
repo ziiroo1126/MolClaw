@@ -93,11 +93,26 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     && conda create -y -n odesign python=3.10 \
     && conda clean -afy
 
-COPY odesign-requirements.txt /tmp/odesign-requirements.txt
+# Install ODesign Python dependencies first for better layer caching.
+COPY odesign-bundle/requirements.txt /tmp/odesign-requirements.txt
 RUN conda run --no-capture-output -n odesign pip install --no-cache-dir \
     -r /tmp/odesign-requirements.txt \
     -f https://data.pyg.org/whl/torch-2.3.1+cu121.html \
     && rm -f /tmp/odesign-requirements.txt
+
+# Bundle full ODesign assets (code + data + ckpt) into the image.
+COPY odesign-bundle/ /workspace/odesign/
+RUN test -f /workspace/odesign/scripts/inference.py \
+    && test -f /workspace/odesign/data/components.v20240608.cif \
+    && test -f /workspace/odesign/data/components.v20240608.cif.rdkit_mol.pkl \
+    && test -f /workspace/odesign/ckpt/ckpt/odesign_base_prot_flex.pt \
+    && test -f /workspace/odesign/ckpt/ckpt/odesign_base_prot_rigid.pt \
+    && test -f /workspace/odesign/ckpt/ckpt/odesign_base_ligand_rigid.pt \
+    && test -f /workspace/odesign/ckpt/ckpt/odesign_base_na_rigid.pt \
+    && test -f /workspace/odesign/ckpt/ckpt/oinvfold_protein.ckpt \
+    && test -f /workspace/odesign/ckpt/ckpt/oinvfold_ligand.ckpt \
+    && test -f /workspace/odesign/ckpt/ckpt/oinvfold_dna.ckpt \
+    && test -f /workspace/odesign/ckpt/ckpt/oinvfold_rna.ckpt
 
 RUN git clone -b v3.5.1 https://github.com/NVIDIA/cutlass.git "${CUTLASS_PATH}"
 RUN printf '#!/bin/bash\nset -e\nsource /opt/conda/etc/profile.d/conda.sh\nexec conda run --no-capture-output -n odesign python "$@"\n' > /usr/local/bin/odesign-python \

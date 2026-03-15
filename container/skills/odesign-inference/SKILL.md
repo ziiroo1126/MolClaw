@@ -12,7 +12,7 @@ Use this skill only after the task-parser skill has already created:
 
 This skill does not regenerate either file. It only verifies prerequisites and runs the prepared script.
 
-Do not edit `/workspace/odesign` in place. Treat it as a read-only mounted repo and execute each run from `/workspace/group/odesign_runs/...`.
+Do not edit `/workspace/odesign` in place. Treat it as a read-only repo bundled in the image (or an explicit host override mount, when configured) and execute each run from `/workspace/group/odesign_runs/...`.
 
 ## Runtime Requirements
 

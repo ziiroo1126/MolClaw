@@ -103,7 +103,8 @@ async function runAgent(prompt: string): Promise<string> {
     '-v', `${agentRunnerSrc}:/app/src:ro`,
   );
 
-  if (fs.existsSync(ODESIGN_REPO_DIR)) {
+  // Optional host override: mount only when explicitly configured.
+  if (ODESIGN_REPO_DIR && fs.existsSync(ODESIGN_REPO_DIR)) {
     args.push('-v', `${ODESIGN_REPO_DIR}:/workspace/odesign:ro`);
   }
 

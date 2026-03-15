@@ -101,7 +101,8 @@ function buildVolumeMounts(
     }
   }
 
-  if (fs.existsSync(ODESIGN_REPO_DIR)) {
+  // Optional host override: mount only when explicitly configured.
+  if (ODESIGN_REPO_DIR && fs.existsSync(ODESIGN_REPO_DIR)) {
     mounts.push({
       hostPath: ODESIGN_REPO_DIR,
       containerPath: '/workspace/odesign',
